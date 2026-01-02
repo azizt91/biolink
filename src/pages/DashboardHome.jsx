@@ -30,7 +30,7 @@ export default function DashboardHome() {
     return (
         <div className="max-w-4xl mx-auto">
             {/* Welcome Section */}
-            <div className="mb-8">
+            <div className="mb-6 lg:mb-8">
                 <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">
                     Selamat datang{profile?.full_name ? `, ${profile.full_name}` : ''}! 👋
                 </h1>
@@ -40,10 +40,10 @@ export default function DashboardHome() {
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:gap-4 mb-6 lg:mb-8">
                 <Link
                     to="/dashboard/links"
-                    className="group bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 hover:border-purple-500/50 transition-all"
+                    className="group bg-white/5 backdrop-blur-xl rounded-2xl p-4 lg:p-6 border border-white/10 hover:border-purple-500/50 transition-all"
                 >
                     <div className="flex items-start gap-4">
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
@@ -64,7 +64,7 @@ export default function DashboardHome() {
 
                 <Link
                     to="/dashboard/profile"
-                    className="group bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 hover:border-purple-500/50 transition-all"
+                    className="group bg-white/5 backdrop-blur-xl rounded-2xl p-4 lg:p-6 border border-white/10 hover:border-purple-500/50 transition-all"
                 >
                     <div className="flex items-start gap-4">
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
@@ -86,22 +86,22 @@ export default function DashboardHome() {
 
             {/* Public Page Link */}
             {profile?.username && (
-                <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-xl rounded-2xl p-6 border border-purple-500/30">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-xl rounded-2xl p-4 lg:p-6 border border-purple-500/30">
+                    <div className="flex flex-col gap-4">
                         <div>
-                            <h3 className="text-lg font-semibold text-white mb-1">Halaman Publik Anda</h3>
+                            <h3 className="text-base lg:text-lg font-semibold text-white mb-1">Halaman Publik Anda</h3>
                             <p className="text-slate-300 text-sm">
                                 Bagikan tautan ini ke pengikut Anda
                             </p>
                         </div>
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                            <div className="flex-1 sm:flex-none bg-white/10 rounded-xl px-4 py-2 text-purple-300 font-mono text-sm truncate max-w-full sm:max-w-xs">
+                        <div className="flex flex-col gap-3">
+                            <div className="bg-white/10 rounded-xl px-3 py-2 text-purple-300 font-mono text-xs sm:text-sm break-all">
                                 {getPublicUrl()}
                             </div>
-                            <div className="flex gap-2">
+                            <div className="grid grid-cols-2 gap-2">
                                 <button
                                     onClick={handleCopyLink}
-                                    className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-medium transition-all flex-1 sm:flex-none ${copied
+                                    className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${copied
                                             ? 'bg-green-500/20 text-green-300 border border-green-500/50'
                                             : 'bg-white/10 hover:bg-white/20 text-white'
                                         }`}
@@ -111,26 +111,26 @@ export default function DashboardHome() {
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                             </svg>
-                                            <span className="hidden sm:inline">Tersalin!</span>
+                                            <span>Tersalin!</span>
                                         </>
                                     ) : (
                                         <>
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                             </svg>
-                                            <span className="hidden sm:inline">Salin</span>
+                                            <span>Salin</span>
                                         </>
                                     )}
                                 </button>
                                 <Link
                                     to={`/${profile.username}`}
                                     target="_blank"
-                                    className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-medium rounded-xl transition-all flex-1 sm:flex-none"
+                                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-medium rounded-xl transition-all"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                     </svg>
-                                    <span className="hidden sm:inline">Lihat</span>
+                                    <span>Lihat</span>
                                 </Link>
                             </div>
                         </div>

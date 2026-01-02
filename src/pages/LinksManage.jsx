@@ -180,15 +180,15 @@ export default function LinksManage() {
 
     return (
         <div className="max-w-2xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Kelola Tautan</h1>
-                    <p className="text-slate-400">Tambah dan atur tautan yang ditampilkan</p>
+            <div className="flex items-center justify-between mb-6 gap-4">
+                <div className="min-w-0">
+                    <h1 className="text-xl lg:text-3xl font-bold text-white mb-1 lg:mb-2">Kelola Tautan</h1>
+                    <p className="text-slate-400 text-sm lg:text-base">Tambah dan atur tautan yang ditampilkan</p>
                 </div>
                 {!showForm && (
                     <button
                         onClick={() => { setShowForm(true); setError(''); setSuccess(''); }}
-                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-medium rounded-xl transition-all"
+                        className="flex items-center gap-2 px-3 lg:px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-medium rounded-xl transition-all shrink-0"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -293,7 +293,7 @@ export default function LinksManage() {
                             className={`bg-white/5 backdrop-blur-xl rounded-2xl p-4 border transition-all ${link.is_active ? 'border-white/10' : 'border-white/5 opacity-60'
                                 }`}
                         >
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2 sm:gap-4">
                                 {/* Order Controls */}
                                 <div className="flex flex-col gap-1">
                                     <button
@@ -318,8 +318,8 @@ export default function LinksManage() {
 
                                 {/* Link Info */}
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="font-semibold text-white truncate">{link.title}</h3>
-                                    <p className="text-sm text-slate-400 truncate">{link.url}</p>
+                                    <h3 className="font-semibold text-white truncate text-sm sm:text-base">{link.title}</h3>
+                                    <p className="text-xs sm:text-sm text-slate-400 truncate">{link.url}</p>
                                 </div>
 
                                 {/* Actions */}
