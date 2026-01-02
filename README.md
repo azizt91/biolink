@@ -53,7 +53,7 @@ Aplikasi **Bio Link** modern dengan tampilan premium untuk membagikan semua link
 ### Langkah 1: Clone Repository
 
 ```bash
-git clone https://github.com/username/bio-link-app.git
+git clone https://github.com/azizt91/biolink.git
 cd bio-link-app
 ```
 
@@ -193,11 +193,11 @@ Source code ini dilisensikan untuk penggunaan personal dan komersial setelah pem
 ## 💬 Dukungan
 
 Butuh bantuan atau kustomisasi? Hubungi:
-- 📧 Email: [email@domain.com]
-- 💬 WhatsApp: [+62xxx]
+- 📧 Email: [azizt91@gmail.com]
+- 💬 WhatsApp: [+6281914170701]
 
 ---
 
 <p align="center">
-  Made with ❤️ by <strong>Your Name</strong>
+  Made with ❤️ by <strong>azizt91</strong>
 </p>
