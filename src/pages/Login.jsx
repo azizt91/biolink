@@ -15,10 +15,19 @@ export default function Login() {
         setError('')
         setLoading(true)
 
-        const { error } = await signIn({ email, password })
+        const { error: signInError } = await signIn({ email, password })
 
-        if (error) {
-            setError(error.message)
+        if (signInError) {
+            // Translate Firebase Auth error codes to user-friendly Indonesian messages
+            const errorMessages = {
+                'auth/invalid-credential': 'Email atau password salah',
+                'auth/user-not-found': 'Akun tidak ditemukan',
+                'auth/wrong-password': 'Password salah',
+                'auth/invalid-email': 'Format email tidak valid',
+                'auth/user-disabled': 'Akun Anda telah dinonaktifkan',
+                'auth/too-many-requests': 'Terlalu banyak percobaan. Coba lagi nanti',
+            }
+            setError(errorMessages[signInError.code] || signInError.message)
             setLoading(false)
         } else {
             navigate('/dashboard')

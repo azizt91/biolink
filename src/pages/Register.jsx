@@ -1,6 +1,16 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { db } from '../lib/firebase'
+import {
+    collection,
+    query,
+    where,
+    getDocs,
+    doc,
+    setDoc,
+    serverTimestamp,
+} from 'firebase/firestore'
 
 export default function Register() {
     const [email, setEmail] = useState('')
@@ -32,13 +42,49 @@ export default function Register() {
 
         setLoading(true)
 
-        const { error } = await signUp({ email, password, username: username.toLowerCase(), fullName })
+        try {
+            const normalizedUsername = username.toLowerCase()
 
-        if (error) {
-            setError(error.message)
-            setLoading(false)
-        } else {
+            // Step 1: Check if username already exists in Firestore "profiles" collection
+            const profilesRef = collection(db, 'profiles')
+            const usernameQuery = query(profilesRef, where('username', '==', normalizedUsername))
+            const usernameSnapshot = await getDocs(usernameQuery)
+
+            if (!usernameSnapshot.empty) {
+                setError('Username sudah digunakan, silakan pilih username lain')
+                setLoading(false)
+                return
+            }
+
+            // Step 2: Create Firebase Auth user
+            const { data, error: signUpError } = await signUp({ email, password })
+
+            if (signUpError) {
+                // Translate common Firebase Auth error codes to friendly messages
+                const errorMessages = {
+                    'auth/email-already-in-use': 'Email sudah terdaftar',
+                    'auth/invalid-email': 'Format email tidak valid',
+                    'auth/weak-password': 'Password terlalu lemah, minimal 6 karakter',
+                }
+                setError(errorMessages[signUpError.code] || signUpError.message)
+                setLoading(false)
+                return
+            }
+
+            // Step 3: Create profile document in Firestore using the Firebase Auth UID
+            const uid = data.user.uid
+            await setDoc(doc(db, 'profiles', uid), {
+                username: normalizedUsername,
+                full_name: fullName,
+                bio: '',
+                avatar_url: '',
+                createdAt: serverTimestamp(),
+            })
+
             setSuccess(true)
+        } catch (err) {
+            setError(err.message)
+        } finally {
             setLoading(false)
         }
     }
@@ -55,7 +101,7 @@ export default function Register() {
                         </div>
                         <h2 className="text-2xl font-bold text-white mb-2">Pendaftaran Berhasil!</h2>
                         <p className="text-slate-400 mb-6">
-                            Silakan cek email Anda untuk verifikasi akun.
+                            Akun Anda telah berhasil dibuat. Silakan masuk.
                         </p>
                         <Link
                             to="/login"

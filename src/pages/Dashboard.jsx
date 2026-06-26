@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { supabase } from '../lib/supabase'
+import { db } from '../lib/firebase'
+import { doc, getDoc } from 'firebase/firestore'
 
 export default function Dashboard() {
     const { user, signOut } = useAuth()
@@ -19,16 +20,15 @@ export default function Dashboard() {
 
     const fetchProfile = async () => {
         try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', user.id)
-                .single()
+            // Profile doc ID == Firebase Auth UID
+            const profileRef = doc(db, 'profiles', user.uid)
+            const profileSnap = await getDoc(profileRef)
 
-            if (error) throw error
-            setProfile(data)
-        } catch (error) {
-            console.error('Error fetching profile:', error)
+            if (profileSnap.exists()) {
+                setProfile({ id: profileSnap.id, ...profileSnap.data() })
+            }
+        } catch (err) {
+            console.error('Error fetching profile:', err)
         } finally {
             setLoading(false)
         }

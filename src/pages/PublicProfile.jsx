@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { db } from '../lib/firebase'
+import {
+    collection,
+    query,
+    where,
+    orderBy,
+    getDocs,
+} from 'firebase/firestore'
 
 export default function PublicProfile() {
     const { username } = useParams()
@@ -15,32 +22,41 @@ export default function PublicProfile() {
 
     const fetchProfile = async () => {
         try {
-            // Fetch profile by username
-            const { data: profileData, error: profileError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('username', username.toLowerCase())
-                .single()
+            // Step 1: Query "profiles" collection where username == params.username
+            const profilesRef = collection(db, 'profiles')
+            const profileQuery = query(
+                profilesRef,
+                where('username', '==', username.toLowerCase())
+            )
+            const profileSnapshot = await getDocs(profileQuery)
 
-            if (profileError || !profileData) {
+            if (profileSnapshot.empty) {
                 setNotFound(true)
                 setLoading(false)
                 return
             }
 
+            // The document ID is the Firebase Auth UID
+            const profileDoc = profileSnapshot.docs[0]
+            const profileData = { id: profileDoc.id, ...profileDoc.data() }
             setProfile(profileData)
 
-            // Fetch active links
-            const { data: linksData } = await supabase
-                .from('links')
-                .select('*')
-                .eq('user_id', profileData.id)
-                .eq('is_active', true)
-                .order('sort_order', { ascending: true })
-
-            setLinks(linksData || [])
-        } catch (error) {
-            console.error('Error fetching profile:', error)
+            // Step 2: Query "links" using the profile document ID (= userId) and is_active == true
+            const linksRef = collection(db, 'links')
+            const linksQuery = query(
+                linksRef,
+                where('userId', '==', profileDoc.id),
+                where('is_active', '==', true),
+                orderBy('order', 'asc')
+            )
+            const linksSnapshot = await getDocs(linksQuery)
+            const linksData = linksSnapshot.docs.map((docSnap) => ({
+                id: docSnap.id,
+                ...docSnap.data(),
+            }))
+            setLinks(linksData)
+        } catch (err) {
+            console.error('Error fetching profile:', err)
             setNotFound(true)
         } finally {
             setLoading(false)

@@ -1,7 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { db } from '../lib/firebase'
 import { useAuth } from '../contexts/AuthContext'
+import {
+    doc,
+    getDoc,
+    updateDoc,
+    collection,
+    query,
+    where,
+    getDocs,
+} from 'firebase/firestore'
 
 export default function ProfileEdit() {
     const { profile, refreshProfile } = useOutletContext()
@@ -33,37 +42,35 @@ export default function ProfileEdit() {
         setLoading(true)
 
         try {
-            // Check if username is taken by another user
-            if (username !== profile?.username) {
-                const { data: existingUser } = await supabase
-                    .from('profiles')
-                    .select('id')
-                    .eq('username', username.toLowerCase())
-                    .neq('id', user.id)
-                    .single()
+            const normalizedUsername = username.toLowerCase()
 
-                if (existingUser) {
+            // Check if the new username is already taken by a DIFFERENT user
+            if (normalizedUsername !== profile?.username) {
+                const profilesRef = collection(db, 'profiles')
+                const usernameQuery = query(profilesRef, where('username', '==', normalizedUsername))
+                const snapshot = await getDocs(usernameQuery)
+
+                // Filter out the current user's own document from results
+                const takenByOther = snapshot.docs.some((docSnap) => docSnap.id !== user.uid)
+                if (takenByOther) {
                     setError('Username sudah digunakan')
                     setLoading(false)
                     return
                 }
             }
 
-            const { error } = await supabase
-                .from('profiles')
-                .update({
-                    username: username.toLowerCase(),
-                    full_name: fullName,
-                    avatar_url: avatarUrl || null,
-                })
-                .eq('id', user.id)
-
-            if (error) throw error
+            // Update the user's profile document in Firestore (doc ID == Firebase Auth UID)
+            const profileRef = doc(db, 'profiles', user.uid)
+            await updateDoc(profileRef, {
+                username: normalizedUsername,
+                full_name: fullName,
+                avatar_url: avatarUrl || '',
+            })
 
             setSuccess('Profil berhasil diperbarui!')
             await refreshProfile()
-        } catch (error) {
-            setError(error.message)
+        } catch (err) {
+            setError(err.message)
         } finally {
             setLoading(false)
         }

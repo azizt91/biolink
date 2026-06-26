@@ -1,5 +1,11 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import {
+    onAuthStateChanged,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut as firebaseSignOut,
+} from 'firebase/auth'
+import { auth } from '../lib/firebase'
 
 const AuthContext = createContext({})
 
@@ -7,59 +13,48 @@ export const useAuth = () => useContext(AuthContext)
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null)
-    const [session, setSession] = useState(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        // Get initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session)
-            setUser(session?.user ?? null)
+        // Firebase real-time auth state listener (replaces Supabase onAuthStateChange)
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+            setUser(firebaseUser)
             setLoading(false)
         })
 
-        // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (event, session) => {
-                setSession(session)
-                setUser(session?.user ?? null)
-                setLoading(false)
-            }
-        )
-
-        return () => subscription.unsubscribe()
+        // Cleanup listener on unmount
+        return () => unsubscribe()
     }, [])
 
-    const signUp = async ({ email, password, username, fullName }) => {
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: {
-                    username: username,
-                    full_name: fullName,
-                },
-            },
-        })
-        return { data, error }
+    const signUp = async ({ email, password }) => {
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+            return { data: userCredential, error: null }
+        } catch (err) {
+            return { data: null, error: err }
+        }
     }
 
     const signIn = async ({ email, password }) => {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        })
-        return { data, error }
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password)
+            return { data: userCredential, error: null }
+        } catch (err) {
+            return { data: null, error: err }
+        }
     }
 
     const signOut = async () => {
-        const { error } = await supabase.auth.signOut()
-        return { error }
+        try {
+            await firebaseSignOut(auth)
+            return { error: null }
+        } catch (err) {
+            return { error: err }
+        }
     }
 
     const value = {
         user,
-        session,
         loading,
         signUp,
         signIn,

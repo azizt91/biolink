@@ -1,7 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { db } from '../lib/firebase'
 import { useAuth } from '../contexts/AuthContext'
+import {
+    collection,
+    query,
+    where,
+    orderBy,
+    getDocs,
+    addDoc,
+    doc,
+    updateDoc,
+    deleteDoc,
+    serverTimestamp,
+} from 'firebase/firestore'
 
 export default function LinksManage() {
     const { profile } = useOutletContext()
@@ -26,16 +38,21 @@ export default function LinksManage() {
 
     const fetchLinks = async () => {
         try {
-            const { data, error } = await supabase
-                .from('links')
-                .select('*')
-                .eq('user_id', user.id)
-                .order('sort_order', { ascending: true })
-
-            if (error) throw error
-            setLinks(data || [])
-        } catch (error) {
-            console.error('Error fetching links:', error)
+            // Query "links" collection where userId == currentUser.uid, ordered by "order" field
+            const linksRef = collection(db, 'links')
+            const q = query(
+                linksRef,
+                where('userId', '==', user.uid),
+                orderBy('order', 'asc')
+            )
+            const snapshot = await getDocs(q)
+            const linksData = snapshot.docs.map((docSnap) => ({
+                id: docSnap.id,
+                ...docSnap.data(),
+            }))
+            setLinks(linksData)
+        } catch (err) {
+            console.error('Error fetching links:', err)
         } finally {
             setLoading(false)
         }
@@ -56,34 +73,29 @@ export default function LinksManage() {
 
         try {
             if (editingLink) {
-                // Update existing link
-                const { error } = await supabase
-                    .from('links')
-                    .update({ title, url })
-                    .eq('id', editingLink.id)
-
-                if (error) throw error
+                // Update existing link document
+                const linkRef = doc(db, 'links', editingLink.id)
+                await updateDoc(linkRef, { title, url })
                 setSuccess('Link berhasil diperbarui!')
             } else {
-                // Create new link
-                const maxOrder = links.length > 0 ? Math.max(...links.map(l => l.sort_order)) : -1
-                const { error } = await supabase
-                    .from('links')
-                    .insert({
-                        user_id: user.id,
-                        title,
-                        url,
-                        sort_order: maxOrder + 1,
-                    })
-
-                if (error) throw error
+                // Create new link — set order to max existing + 1
+                const maxOrder = links.length > 0 ? Math.max(...links.map((l) => l.order)) : -1
+                const linksRef = collection(db, 'links')
+                await addDoc(linksRef, {
+                    userId: user.uid,
+                    title,
+                    url,
+                    is_active: true,
+                    order: maxOrder + 1,
+                    createdAt: serverTimestamp(),
+                })
                 setSuccess('Link berhasil ditambahkan!')
             }
 
             resetForm()
             await fetchLinks()
-        } catch (error) {
-            setError(error.message)
+        } catch (err) {
+            setError(err.message)
         } finally {
             setSaving(false)
         }
@@ -105,30 +117,21 @@ export default function LinksManage() {
         setSuccess('')
 
         try {
-            const { error } = await supabase
-                .from('links')
-                .delete()
-                .eq('id', id)
-
-            if (error) throw error
+            await deleteDoc(doc(db, 'links', id))
             setSuccess('Link berhasil dihapus!')
             await fetchLinks()
-        } catch (error) {
-            setError(error.message)
+        } catch (err) {
+            setError(err.message)
         }
     }
 
     const handleToggleActive = async (link) => {
         try {
-            const { error } = await supabase
-                .from('links')
-                .update({ is_active: !link.is_active })
-                .eq('id', link.id)
-
-            if (error) throw error
+            const linkRef = doc(db, 'links', link.id)
+            await updateDoc(linkRef, { is_active: !link.is_active })
             await fetchLinks()
-        } catch (error) {
-            setError(error.message)
+        } catch (err) {
+            setError(err.message)
         }
     }
 
@@ -136,18 +139,19 @@ export default function LinksManage() {
         if (index === 0) return
 
         const newLinks = [...links]
-        const temp = newLinks[index].sort_order
-        newLinks[index].sort_order = newLinks[index - 1].sort_order
-        newLinks[index - 1].sort_order = temp
+        // Swap the "order" values between adjacent items
+        const tempOrder = newLinks[index].order
+        newLinks[index].order = newLinks[index - 1].order
+        newLinks[index - 1].order = tempOrder
 
         try {
             await Promise.all([
-                supabase.from('links').update({ sort_order: newLinks[index].sort_order }).eq('id', newLinks[index].id),
-                supabase.from('links').update({ sort_order: newLinks[index - 1].sort_order }).eq('id', newLinks[index - 1].id),
+                updateDoc(doc(db, 'links', newLinks[index].id), { order: newLinks[index].order }),
+                updateDoc(doc(db, 'links', newLinks[index - 1].id), { order: newLinks[index - 1].order }),
             ])
             await fetchLinks()
-        } catch (error) {
-            setError(error.message)
+        } catch (err) {
+            setError(err.message)
         }
     }
 
@@ -155,18 +159,18 @@ export default function LinksManage() {
         if (index === links.length - 1) return
 
         const newLinks = [...links]
-        const temp = newLinks[index].sort_order
-        newLinks[index].sort_order = newLinks[index + 1].sort_order
-        newLinks[index + 1].sort_order = temp
+        const tempOrder = newLinks[index].order
+        newLinks[index].order = newLinks[index + 1].order
+        newLinks[index + 1].order = tempOrder
 
         try {
             await Promise.all([
-                supabase.from('links').update({ sort_order: newLinks[index].sort_order }).eq('id', newLinks[index].id),
-                supabase.from('links').update({ sort_order: newLinks[index + 1].sort_order }).eq('id', newLinks[index + 1].id),
+                updateDoc(doc(db, 'links', newLinks[index].id), { order: newLinks[index].order }),
+                updateDoc(doc(db, 'links', newLinks[index + 1].id), { order: newLinks[index + 1].order }),
             ])
             await fetchLinks()
-        } catch (error) {
-            setError(error.message)
+        } catch (err) {
+            setError(err.message)
         }
     }
 
